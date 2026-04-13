@@ -641,14 +641,14 @@
         </div>
         <div class="field">
           <label>Breed *</label>
-          <input type="text" id="dogBreed" placeholder="e.g. Labrador Retriever" required>
+          <input type="text" id="dogBreed" placeholder="e.g. Labrador Retriever">
         </div>
       </div>
 
       <div class="field-row">
         <div class="field">
           <label>Age (years) *</label>
-          <input type="number" id="dogAge" placeholder="e.g. 4" min="0" max="25" step="0.5" required>
+          <input type="number" id="dogAge" placeholder="e.g. 4" min="0" max="25" step="0.5">
         </div>
         <div class="field">
           <label>Weight (lbs, optional)</label>
@@ -659,7 +659,7 @@
       <div class="field">
         <label>Sex &amp; Neuter Status *</label>
         <div class="select-wrap">
-          <select id="dogSex" required>
+          <select id="dogSex">
             <option value="">Select...</option>
             <option value="Male (intact)">Male — Intact</option>
             <option value="Male (neutered)">Male — Neutered</option>
@@ -973,7 +973,7 @@
 const state = {
   imageUrls: { right: null, left: null, front: null, lower: null },
   imageFiles: { right: null, left: null, front: null, lower: null },
-  uploadcarePublicKey: 5093feb7a740ff400f85, // ← REPLACE THIS
+  uploadcarePublicKey: '5093feb7a740ff400f85', // ← REPLACE THIS
 };
 
 // ── UPLOADCARE INTEGRATION ─────────────────────────────────────────────────────
@@ -990,7 +990,7 @@ async function uploadToUploadcare(file) {
 
   if (!response.ok) throw new Error('Upload failed');
   const data = await response.json();
-  return `https://ucarecdn.com/${data.file}/`;
+  const fileId = data.file; return `https://ucarecdn.com/${fileId}/`;
 }
 
 // ── FILE HANDLING ──────────────────────────────────────────────────────────────
@@ -1036,23 +1036,22 @@ function goToScreen(n) {
   // Validate before advancing
   if (n === 2) {
     const breed = document.getElementById('dogBreed').value.trim();
-    const age = document.getElementById('dogAge').value;
+    const age = document.getElementById('dogAge').value.trim();
     const sex = document.getElementById('dogSex').value;
-    if (!breed || !age || !sex) {
-      document.getElementById('err1').classList.add('show');
-      return;
-    }
-    document.getElementById('err1').classList.remove('show');
+    const errEl = document.getElementById('err1');
+    if (!breed) { errEl.textContent = 'Please enter your dog\'s breed.'; errEl.classList.add('show'); return; }
+    if (!age || isNaN(parseFloat(age))) { errEl.textContent = 'Please enter your dog\'s age.'; errEl.classList.add('show'); return; }
+    if (!sex) { errEl.textContent = 'Please select your dog\'s sex and neuter status.'; errEl.classList.add('show'); return; }
+    errEl.classList.remove('show');
   }
 
   if (n === 3) {
     const food = document.getElementById('currentFood').value.trim();
     const diet = document.getElementById('dietType').value;
-    if (!food || !diet) {
-      document.getElementById('err2').classList.add('show');
-      return;
-    }
-    document.getElementById('err2').classList.remove('show');
+    const errEl = document.getElementById('err2');
+    if (!food) { errEl.textContent = 'Please enter your dog\'s current food.'; errEl.classList.add('show'); return; }
+    if (!diet) { errEl.textContent = 'Please select a diet type.'; errEl.classList.add('show'); return; }
+    errEl.classList.remove('show');
   }
 
   // Hide all screens
