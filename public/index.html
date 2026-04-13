@@ -388,8 +388,25 @@
     opacity: 0.4;
     transition: all 0.4s ease;
   }
-  .loading-step.active { opacity: 1; background: var(--sage-pale); color: var(--sage); }
-  .loading-step.done { opacity: 1; background: var(--sage-pale); color: var(--sage); }
+  .loading-step.active {
+    opacity: 1;
+    background: var(--sage-pale);
+    color: var(--sage);
+    font-weight: 600;
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(74,124,89,0.15);
+  }
+  .loading-step.done {
+    opacity: 0.7;
+    background: var(--sand);
+    color: var(--bark-light);
+    text-decoration: none;
+  }
+  .loading-step.done::after {
+    content: ' ✓';
+    color: var(--sage);
+    font-weight: 700;
+  }
 
   /* ── RESULTS ── */
   .results-screen { display: none; }
@@ -1434,10 +1451,11 @@ function fileToBase64(file) {
 
 function resizeImageIfNeeded(file) {
   return new Promise((resolve) => {
-    // Aggressively small - must complete 2 API calls within 30s
-    // Target: max 600px on longest side, 0.65 quality = typically 40-80KB per image
-    const MAX_DIMENSION = 600;
-    const QUALITY = 0.65;
+    // Very aggressive compression - phone photos must be tiny for API speed
+    // Target: max 500px longest side, 0.50 quality = typically 25-45KB per image
+    // Two images = ~50-90KB total base64 payload - well within limits
+    const MAX_DIMENSION = 500;
+    const QUALITY = 0.50;
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
@@ -1579,12 +1597,20 @@ function animateLoadingSteps() {
 }
 
 function activateLoadingStep(n) {
+  // n is 1-based: 1=examining, 2=scoring, 3=nutrition, 4=preparing
   const steps = ['lstep1','lstep2','lstep3','lstep4'];
   steps.forEach((id, i) => {
     const el = document.getElementById(id);
-    el.classList.remove('active');
-    if (i < n - 1) el.classList.add('done');
-    else if (i === n - 1) el.classList.add('active');
+    // Clear all classes first
+    el.classList.remove('active', 'done');
+    if (i + 1 < n) {
+      // Steps before current = done
+      el.classList.add('done');
+    } else if (i + 1 === n) {
+      // Current step = active
+      el.classList.add('active');
+    }
+    // Steps after current = default (no class)
   });
 }
 
@@ -1616,6 +1642,15 @@ async function runAnalysis() {
   try {
     // ── STEP 1: Dental analysis (with photos) ───────────────────────────────
     activateLoadingStep(1);
+
+    // Check payload size before sending
+    const rightSize = Math.round((state.imageBase64.right || '').length / 1024);
+    const leftSize  = Math.round((state.imageBase64.left  || '').length / 1024);
+    console.log(`Image sizes — right: ${rightSize}KB, left: ${leftSize}KB, total: ${rightSize + leftSize}KB`);
+    if (rightSize + leftSize > 400) {
+      console.warn('Payload still large — consider further compression');
+    }
+
     const dentalResponse = await fetch('/.netlify/functions/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
