@@ -109,6 +109,10 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({error:"Missing dogProfile or images.right.base64"}) };
   }
 
+  // Log incoming payload size for debugging
+  const payloadSize = Math.round((event.body || '').length / 1024);
+  console.log("Payload size:", payloadSize, "KB");
+
   try {
     const { breed, age, sex, weight, currentFood, dietType, treats, homeCare, bodyCondition, lastCleaning, symptoms } = dogProfile;
 
