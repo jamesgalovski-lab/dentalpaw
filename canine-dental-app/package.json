@@ -1,0 +1,15 @@
+{
+  "name": "canine-dental-screening",
+  "version": "1.0.0",
+  "description": "AI-powered canine dental screening and nutrition app",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'Static site - no build step needed'"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  }
+}
