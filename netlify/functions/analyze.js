@@ -186,7 +186,7 @@ exports.handler = async (event) => {
 
   const {
     name, breed, age, sex, weight,
-    currentFood, dietType, treats, treatFrequency, feedingSchedule, proteinSource,
+    dietType, treats, treatFrequency, feedingSchedule, proteinSource,
     homeCare, bodyCondition, lastCleaning, symptoms
   } = dogProfile;
 
@@ -222,7 +222,7 @@ exports.handler = async (event) => {
     content.push({ type: "text", text:
       `Dog: ${breed}, ${age}yrs, ${sex}${weight ? ", " + weight + "lbs" : ""}
 ${flags.length > 0 ? "Flags: " + flags.join("; ") : ""}
-Food: ${currentFood || "unknown"} (${dietType})
+Food format: ${dietType}
 Symptoms: ${symptoms?.length > 0 ? symptoms.join(", ") : "none"}
 
 Return JSON:
@@ -256,7 +256,7 @@ Return JSON:
     const nutritionPrompt =
 `DOG: ${dogName}, ${breed}, ${age}yrs, ${sex}${weight ? ", " + weight + "lbs" : ""}${flags.length > 0 ? " | " + flags.join("; ") : ""}
 DENTAL: risk=${dentalResults.overall_risk}, tartar=${dentalResults.tartar?.composite}/3, gums=${dentalResults.gingival?.composite}/3, structure=${dentalResults.structural?.score}/3
-DIET: ${currentFood} (${dietType}) | protein=${proteinSource || "unknown"} | schedule=${feedingSchedule || "unknown"}
+DIET: ${dietType} | protein=${proteinSource || "unknown"} | schedule=${feedingSchedule || "unknown"}
 TREATS: ${treats || "none"} | frequency=${treatFrequency || "unknown"}
 HOME CARE: ${homeCare || "none"} | last cleaning=${lastCleaning || "unknown"} | body condition=${bodyCondition || "unknown"}
 SYMPTOMS: ${symptoms?.length > 0 ? symptoms.join(", ") : "none"}
