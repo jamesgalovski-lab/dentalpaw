@@ -62,12 +62,16 @@
     border-radius: 2px;
   }
   .logo-mark {
-    width: 64px; height: 64px;
-    background: var(--bark);
+    width: 80px; height: 80px;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     margin: 0 auto 16px;
-    font-size: 28px;
+    overflow: hidden;
+    background: transparent;
+  }
+  .logo-mark img {
+    width: 100%; height: 100%;
+    object-fit: contain;
   }
   .header h1 {
     font-family: var(--font-display);
@@ -135,6 +139,14 @@
   }
 
   .field { margin-bottom: 20px; }
+  .field-hint {
+    font-size: 12px;
+    color: var(--bark-light);
+    line-height: 1.5;
+    margin-top: 6px;
+    font-style: italic;
+    padding-left: 2px;
+  }
   .field label {
     display: block;
     font-size: 13px;
@@ -387,13 +399,15 @@
   }
   .loading-screen.active { display: block; }
   .paw-spinner {
-    font-size: 48px;
-    animation: pawSpin 1.5s ease-in-out infinite;
-    display: block; margin-bottom: 24px;
+    width: 72px; height: 72px;
+    animation: pawSpin 1.8s ease-in-out infinite;
+    display: block;
+    margin: 0 auto 24px;
+    object-fit: contain;
   }
   @keyframes pawSpin {
     0% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(180deg) scale(1.1); }
+    50% { transform: rotate(180deg) scale(1.08); }
     100% { transform: rotate(360deg) scale(1); }
   }
   .loading-screen h2 {
@@ -974,7 +988,7 @@
 <div class="app">
 
   <header class="header">
-    <div class="logo-mark">🐾</div>
+    <div class="logo-mark"><img src="NoblNoseOrange_copyright.png" alt="NOBL Pet Foods"></div>
     <h1>NOBL Dental Tracker</h1>
     <p>AI-powered canine dental screening &amp; nutrition guidance</p>
   </header>
@@ -1052,10 +1066,6 @@
       <div class="card-title">Diet &amp; Dental Care</div>
       <div class="card-subtitle">The more context you give us, the more targeted your recommendations will be.</div>
       <div class="field">
-        <label>Current Main Food *</label>
-        <input type="text" id="currentFood" placeholder="e.g. Royal Canin Medium Adult, or Blue Buffalo Chicken">
-      </div>
-      <div class="field">
         <label>Diet Type *</label>
         <div class="select-wrap">
           <select id="dietType">
@@ -1107,6 +1117,7 @@
             <option value="free fed (always available)">Free fed — food always available</option>
           </select>
         </div>
+        <div class="field-hint">Each meal creates an acid environment in the mouth that can erode enamel. Free feeding means that acid exposure is constant — one of the biggest hidden drivers of dental disease.</div>
       </div>
       <div class="field">
         <label>Primary Protein Source in Main Food</label>
@@ -1121,6 +1132,7 @@
             <option value="unknown">Not sure</option>
           </select>
         </div>
+        <div class="field-hint">High-quality animal protein provides the building blocks for healthy gum tissue. Plant-based proteins alone may not deliver the same support — worth knowing if gum health is a concern.</div>
       </div>
       <div class="field">
         <label>Home Dental Care (select all that apply)</label>
@@ -1254,7 +1266,7 @@
 
   <!-- LOADING -->
   <div class="loading-screen" id="loadingScreen">
-    <span class="paw-spinner">🐾</span>
+    <img src="NoblNoseOrange_copyright.png" alt="NOBL" class="paw-spinner">
     <h2>Analysing <span id="loadingDogName">your dog</span>'s teeth…</h2>
     <p>Our AI is examining each photo carefully</p>
     <div class="loading-steps">
@@ -1644,10 +1656,8 @@ function goToScreen(n) {
     errEl.classList.remove('show');
   }
   if (n === 3) {
-    const food = document.getElementById('currentFood').value.trim();
     const diet = document.getElementById('dietType').value;
     const errEl = document.getElementById('err2');
-    if (!food) { errEl.textContent = 'Please enter your dog\'s current food.'; errEl.classList.add('show'); return; }
     if (!diet) { errEl.textContent = 'Please select a diet type.'; errEl.classList.add('show'); return; }
     errEl.classList.remove('show');
   }
@@ -1684,7 +1694,6 @@ function collectProfile() {
     age: parseFloat(document.getElementById('dogAge').value),
     weight: document.getElementById('dogWeight').value || null,
     sex: document.getElementById('dogSex').value,
-    currentFood: document.getElementById('currentFood').value.trim(),
     dietType: document.getElementById('dietType').value,
     treats: getCheckedValues('treatsGroup').join(', ') || 'None specified',
     treatFrequency: document.getElementById('treatFrequency').value || 'Not specified',
@@ -2120,7 +2129,7 @@ async function downloadPDF() {
 </div>
 
 <h1>${dogName}'s Dental Report</h1>
-<p style="color:#8B6355;margin:0 0 16px">${profile.breed || ''} · ${profile.age || ''}yrs · ${profile.sex || ''} · Currently eating: ${profile.currentFood || 'not specified'}</p>
+<p style="color:#8B6355;margin:0 0 16px">${profile.breed || ''} · ${profile.age || ''}yrs · ${profile.sex || ''} · Diet: ${profile.dietType || 'not specified'}</p>
 
 <div class="risk-box">
   <div class="risk-label">${RISK_LABELS[risk]}</div>
