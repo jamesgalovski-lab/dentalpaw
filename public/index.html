@@ -2151,9 +2151,8 @@ async function downloadPDF() {
   .plan-item { flex: 1; background: #FAF7F2; border-top: 3px solid #4A7C59; border-radius: 6px; padding: 12px 10px; }
   .plan-day { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #4A7C59; margin-bottom: 6px; }
   .plan-text { font-size: 12px; color: #5C3D2E; }
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-  .tag-seek { background: #E8F2EB; color: #4A7C59; padding: 3px 10px; border-radius: 100px; font-size: 11px; }
-  .tag-avoid { background: #FDECEA; color: #C0392B; padding: 3px 10px; border-radius: 100px; font-size: 11px; }
+  .bowl-box { background: #FDF3E3; border-left: 4px solid #D4831A; border-radius: 6px; padding: 12px 16px; margin: 10px 0; font-size: 13px; color: #5C3D2E; }
+  .bowl-box .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #D4831A; margin-bottom: 4px; font-weight: 700; }
   .disclaimer { font-size: 11px; color: #8B6355; border-top: 1px solid #E8DDD0; padding-top: 14px; margin-top: 24px; }
   .two-col { display: flex; gap: 20px; }
   .two-col > div { flex: 1; }
@@ -2200,9 +2199,6 @@ async function downloadPDF() {
 <h2>Key Findings</h2>
 ${(dental.key_findings || []).map(f => `<div class="finding">→ ${f}</div>`).join('')}
 
-<h2>Nutrition &amp; Dental Health</h2>
-<p>${nutrition.diet_assessment || ''}</p>
-
 <h2>About Your Dog's Food Format</h2>
 <p>${nutrition.diet_mechanism || ''}</p>
 ${nutrition.format_callout ? `<div class="format-box"><div class="lbl">What to Keep in Mind</div>${nutrition.format_callout}</div>` : ''}
@@ -2221,12 +2217,6 @@ ${(nutrition.food_recommendations || []).map(r =>
   `<div class="finding"><strong>${r.category}${r.vohc_approved ? ' · VOHC ✓' : ''} [${r.priority}]</strong><br>${r.recommendation}${r.mechanism ? `<br><em style="color:#8B6355">Why: ${r.mechanism}</em>` : ''}</div>`
 ).join('')}
 
-<h2>Ingredient Guide</h2>
-<div class="two-col">
-  <div><strong style="color:#4A7C59">✅ Look For</strong><div class="tags">${(nutrition.ingredients_to_seek||[]).map(s=>`<span class="tag-seek">${s}</span>`).join('')}</div></div>
-  <div><strong style="color:#C0392B">❌ Reduce</strong><div class="tags">${(nutrition.ingredients_to_avoid||[]).map(s=>`<span class="tag-avoid">${s}</span>`).join('')}</div></div>
-</div>
-
 <h2>Your 30/60/90 Day Action Plan</h2>
 <div class="plan">
   <div class="plan-item"><div class="plan-day">Day 30</div><div class="plan-text">${nutrition.action_plan?.day_30 || ''}</div></div>
@@ -2236,6 +2226,10 @@ ${(nutrition.food_recommendations || []).map(r =>
 
 <h2>Home Care Routine</h2>
 ${(nutrition.home_care_tips || []).map(t => `<div class="finding">→ ${t}</div>`).join('')}
+<div class="bowl-box">
+  <div class="lbl">🥣 Don't Forget the Bowls</div>
+  Food and water bowls develop a bacterial biofilm (slime layer) within 24 hours. That biofilm is a direct source of oral bacteria that contributes to plaque. Washing bowls daily with hot soapy water — or running them through the dishwasher — is one of the simplest ways to reduce your dog's bacterial load between teeth cleanings.
+</div>
 <p style="color:#4A7C59;font-style:italic;margin-top:12px">${nutrition.positive_note || ''}</p>
 
 <div class="disclaimer">
