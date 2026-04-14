@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DentalPaw — Canine Dental Screening</title>
+<title>NOBL Dental Tracker — Canine Dental Screening</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -501,6 +501,13 @@
     display: flex; flex-direction: column; gap: 8px;
     margin-bottom: 20px;
   }
+  .findings-intro {
+    font-size: 13px;
+    color: var(--bark-light);
+    font-style: italic;
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
   .finding-item {
     display: flex; align-items: flex-start; gap: 10px;
     padding: 12px 16px;
@@ -760,6 +767,14 @@
     display: grid; grid-template-columns: 1fr 1px 1fr; gap: 16px;
     margin-top: 12px;
   }
+  .bilateral-why {
+    font-size: 13px;
+    color: var(--bark-mid);
+    line-height: 1.7;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--sand);
+  }
   .bilateral-divider { background: var(--sand); }
   .bilateral-label {
     font-size: 11px; font-weight: 700; text-transform: uppercase;
@@ -960,7 +975,7 @@
 
   <header class="header">
     <div class="logo-mark">🐾</div>
-    <h1>DentalPaw</h1>
+    <h1>NOBL Dental Tracker</h1>
     <p>AI-powered canine dental screening &amp; nutrition guidance</p>
   </header>
 
@@ -1413,6 +1428,9 @@
 
     <div class="bilateral-card card">
       <div class="section-tag">📊 Left vs Right Comparison</div>
+      <div class="bilateral-why">
+        Dogs almost always chew more on one side — whether from habit, discomfort, or a past dental issue. When tartar or gum scores are similar on both sides, that's generally reassuring. When one side scores notably higher, it can be a signal worth paying attention to: it may mean your dog is favouring that side, which can accelerate disease there while the underused side stays cleaner. It can also point to something localised — a sore tooth, a hidden fracture, or early infection — that wouldn't show up in an overall score. That's why we look at both sides separately.
+      </div>
       <div class="bilateral-grid">
         <div class="bilateral-col">
           <div class="bilateral-label">Right Side</div>
@@ -1431,6 +1449,7 @@
 
     <div class="card">
       <div class="section-tag">🔍 Key Findings</div>
+      <div class="findings-intro">Here's what stood out in the photos — both the clinical picture and what it actually means for your dog day to day.</div>
       <ul class="findings-list" id="findingsList"></ul>
       <div class="vet-urgency-badge" id="vetUrgencyBadge" style="display:none"></div>
     </div>
@@ -1447,12 +1466,6 @@
     <!--  • No verdicts, no scores — just information the owner can act on  -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <div class="nutrition-section">
-
-      <!-- Diet Overview — informational, no scoring -->
-      <div class="card diet-info-card">
-        <div class="section-tag">🥗 Nutrition &amp; Your Dog's Dental Health</div>
-        <div class="diet-overview-text" id="dietAssessment"></div>
-      </div>
 
       <!-- Main Food + Treats + Science -->
       <div class="card">
@@ -1509,21 +1522,6 @@
         <div class="rec-list" id="recList"></div>
       </div>
 
-      <!-- Ingredient Guide -->
-      <div class="card">
-        <div class="section-tag">🏷 What to Look for on the Label</div>
-        <div class="ingredient-col-grid">
-          <div>
-            <div class="ingredient-col-label seek">✅ Worth Seeking Out</div>
-            <div class="tags-row" id="seekTags"></div>
-          </div>
-          <div>
-            <div class="ingredient-col-label avoid">⚠️ Worth Reducing</div>
-            <div class="tags-row" id="avoidTags"></div>
-          </div>
-        </div>
-      </div>
-
       <!-- Action Plan -->
       <div class="card" id="actionPlanCard">
         <div class="section-tag" id="actionPlanTag">📅 A Suggested Path Forward</div>
@@ -1563,7 +1561,7 @@
     </div><!-- /nutrition-section -->
 
     <div class="disclaimer">
-      <strong>Screening tool only.</strong> DentalPaw analyses visible tooth surfaces from photographs. Subgingival disease, periodontal pockets, and root health cannot be assessed from photos. Any orange or red result should be discussed with your veterinarian promptly. This tool does not replace professional veterinary care.
+      <strong>Screening tool only.</strong> NOBL Dental Tracker analyses visible tooth surfaces from photographs. Subgingival disease, periodontal pockets, and root health cannot be assessed from photos. Any orange or red result should be discussed with your veterinarian promptly. This tool does not replace professional veterinary care.
     </div>
 
   </div><!-- /screen4 -->
@@ -2117,7 +2115,7 @@ async function downloadPDF() {
 </style></head><body>
 
 <div class="header">
-  <div class="logo">Dental<span>Paw</span></div>
+  <div class="logo">NOBL <span>Dental Tracker</span></div>
   <div class="date">Report generated ${date}</div>
 </div>
 
@@ -2196,7 +2194,7 @@ ${(nutrition.home_care_tips || []).map(t => `<div class="finding">→ ${t}</div>
 <p style="color:#4A7C59;font-style:italic;margin-top:12px">${nutrition.positive_note || ''}</p>
 
 <div class="disclaimer">
-  <strong>Important:</strong> DentalPaw is a wellness screening tool, not a veterinary diagnostic service. Results are based on visible tooth surfaces only. Subgingival disease, periodontal pockets, and root health cannot be assessed from photographs. Any orange or red result should be discussed with your veterinarian. Recheck recommended in ${nutrition.recheck_days || 60} days.
+  <strong>Important:</strong> NOBL Dental Tracker is a wellness screening tool, not a veterinary diagnostic service. Results are based on visible tooth surfaces only. Subgingival disease, periodontal pockets, and root health cannot be assessed from photographs. Any orange or red result should be discussed with your veterinarian. Recheck recommended in ${nutrition.recheck_days || 60} days.
 </div>
 
 </body></html>`;
