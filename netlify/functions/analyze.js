@@ -32,20 +32,29 @@ GINGIVAL (0-3): 0=healthy pink, 1=mild redness, 2=obvious swelling, 3=severe/rec
 STRUCTURAL (0-3): 0=intact, 1=minor chips, 2=fracture or missing, 3=severe
 RISK: GREEN=0-2, YELLOW=3-5, ORANGE=6-7, RED=8-9
 
-KEY FINDINGS TONE — CRITICAL:
-Each finding must have TWO layers in a single sentence or two:
-1. The clinical observation (what you see)
-2. What it actually means in plain, warm, friend-to-friend language — as if a vet friend is explaining it over coffee, not writing a chart note.
+PERIODONTAL STAGING (assign to periodontal_stage field):
+PD0 = healthy, no gingivitis, no attachment loss
+PD1 = gingivitis only, reversible, no bone/attachment loss
+PD2 = early periodontitis, <25% attachment loss, early bone changes
+PD3 = moderate periodontitis, 25-50% attachment loss
+PD4 = advanced periodontitis, >50% attachment loss, possible mobility/tooth loss
+Base this on gingival score + structural score combined. When in doubt, stage conservatively.
 
-Examples of the right tone:
+KEY FINDINGS — CRITICAL RULES:
+1. TWO LAYERS per finding: clinical observation + plain warm explanation (vet friend over coffee tone)
+2. AGE CONTEXT: Always interpret scores against age. Tartar/2 at age 2 = alarming early warning. Tartar/2 at age 9 = expected but manageable. Say this explicitly.
+3. BREED CONTEXT: If breed flags are present (SMALL BREED, BRACHYCEPHALIC), mention it in at least one finding — these dogs have elevated risk and owners need to know why.
+4. SYMPTOM CORRELATION: If symptoms were reported, connect at least one finding to a reported symptom. e.g. "You mentioned [name] has been dropping food — the buildup we're seeing on the left side could explain that discomfort."
+5. PHOTO QUALITY: If a photo is marginal or poor, note it warmly in a finding — never silently affect scores without flagging it. e.g. "The right-side photo was a little dark, so our read there is an estimate — retaking it in brighter light would give us a clearer picture."
+
+Tone examples:
 - WRONG: "Moderate calculus accumulation noted on upper carnassial bilaterally."
 - RIGHT: "There's a moderate layer of tartar building up on the big back teeth on both sides — that's the tooth that does most of the heavy chewing, so it tends to collect the most buildup and is the one vets watch most closely."
 - WRONG: "Mild gingival inflammation present."
 - RIGHT: "The gums look a little pink and puffy along the gumline — that's early gingivitis, and the good news is it's fully reversible at this stage with regular brushing."
-- WRONG: "Asymmetric tartar noted."
-- RIGHT: "The right side has noticeably more buildup than the left — dogs often chew more on one side, sometimes because the other side is a bit sore. Worth mentioning to your vet."
 
-owner_summary should use the dog's name and the same warm friend tone.
+owner_summary: 2-3 warm sentences using dog's name. Reference their age and breed if flags present. Set honest expectations.
+key_findings: 3-5 items maximum. Each finding: 1-2 sentences only. Clinical observation + plain explanation. No padding.
 Never state specific diagnoses. Be a screener, not a diagnostician.
 Respond with ONLY a raw JSON object. Start with { end with }. No markdown.`;
 
@@ -96,11 +105,37 @@ async function callClaude(systemPrompt, messages, maxTokens) {
 }
 
 function extractJSON(text) {
+  // Try clean parse first
   try { return JSON.parse(text.trim()); } catch(e) {}
+  // Strip markdown fences
   try { return JSON.parse(text.replace(/```[\w]*\n?/g, "").trim()); } catch(e) {}
+  // Find outermost { }
   const s = text.indexOf("{"), e2 = text.lastIndexOf("}");
   if (s !== -1 && e2 > s) { try { return JSON.parse(text.slice(s, e2 + 1)); } catch(e) {} }
-  throw new Error("No JSON found: " + text.substring(0, 100));
+  // Last resort: try to find and fix truncated JSON by closing open structures
+  if (s !== -1) {
+    let partial = text.slice(s);
+    // Count unclosed braces/brackets and close them
+    let braces = 0, brackets = 0, inString = false, escaped = false;
+    for (const ch of partial) {
+      if (escaped) { escaped = false; continue; }
+      if (ch === '\\' && inString) { escaped = true; continue; }
+      if (ch === '"' && !escaped) { inString = !inString; continue; }
+      if (!inString) {
+        if (ch === '{') braces++;
+        else if (ch === '}') braces--;
+        else if (ch === '[') brackets++;
+        else if (ch === ']') brackets--;
+      }
+    }
+    // Strip trailing incomplete key-value
+    partial = partial.replace(/,\s*"[^"]*"\s*:\s*[^,}\]]*$/, '');
+    partial = partial.replace(/,\s*"[^"]*"\s*$/, '');
+    // Close open structures
+    partial += ']'.repeat(Math.max(0, brackets)) + '}'.repeat(Math.max(0, braces));
+    try { return JSON.parse(partial); } catch(e) {}
+  }
+  throw new Error("No JSON found in response (length: " + text.length + "): " + text.substring(0, 120));
 }
 
 function fallbackDental() {
@@ -109,7 +144,9 @@ function fallbackDental() {
     gingival: { right: 0, left: 0, composite: 0, notes: "Could not assess" },
     structural: { score: 0, notes: "Could not assess" },
     overall_risk: "YELLOW", composite_score: 3,
+    periodontal_stage: "PD0",
     image_quality: { right: "marginal", left: "marginal", notes: "Retake in bright light" },
+    photo_quality_alert: "We weren't able to get a clear enough read from these photos — try retaking them outside in bright natural light with the cheek gently pulled back.",
     key_findings: ["Photos were unclear — please retake outdoors in natural light with cheek gently pulled back"],
     owner_summary: "We couldn't get a clear enough read from these photos. Try again outside in bright light with the cheek pulled back so the large back tooth is clearly visible.",
     vet_urgency: "routine", nutrition_flags: [], confidence: "low"
@@ -223,18 +260,22 @@ exports.handler = async (event) => {
       `Dog: ${breed}, ${age}yrs, ${sex}${weight ? ", " + weight + "lbs" : ""}
 ${flags.length > 0 ? "Flags: " + flags.join("; ") : ""}
 Food format: ${dietType}
-Symptoms: ${symptoms?.length > 0 ? symptoms.join(", ") : "none"}
+Symptoms reported: ${symptoms?.length > 0 ? symptoms.join(", ") : "none"}
+${body.previousScan ? `PREVIOUS SCAN (${body.previousScan.date}): tartar=${body.previousScan.tartar}/3, gums=${body.previousScan.gums}/3, risk=${body.previousScan.risk} — note any improvement or progression in findings.` : "First scan — no previous data."}
 
 Return JSON:
-{"tartar":{"right":0,"left":0,"composite":0,"notes":""},"gingival":{"right":0,"left":0,"composite":0,"notes":""},"structural":{"score":0,"notes":""},"overall_risk":"GREEN","composite_score":0,"image_quality":{"right":"good","left":"good","notes":""},"key_findings":[""],"owner_summary":"2-3 warm sentences using dog name ${dogName}","vet_urgency":"routine","nutrition_flags":[""],"confidence":"high"}`
+{"tartar":{"right":0,"left":0,"composite":0,"notes":""},"gingival":{"right":0,"left":0,"composite":0,"notes":""},"structural":{"score":0,"notes":""},"overall_risk":"GREEN","composite_score":0,"periodontal_stage":"PD0","image_quality":{"right":"good","left":"good","notes":""},"photo_quality_alert":"","key_findings":[""],"owner_summary":"2-3 warm sentences using dog name ${dogName}","vet_urgency":"routine","nutrition_flags":[""],"confidence":"high"}`
     });
 
     let dental = fallbackDental();
     try {
-      const text = await callClaude(DENTAL_SYSTEM_PROMPT, [{ role: "user", content }], 800);
+      const text = await callClaude(DENTAL_SYSTEM_PROMPT, [{ role: "user", content }], 1200);
       dental = extractJSON(text);
-      console.log("Dental OK:", dental.overall_risk);
-    } catch(e) { console.error("Dental error:", e.message); }
+      console.log("Dental OK:", dental.overall_risk, "| confidence:", dental.confidence);
+    } catch(e) {
+      console.error("Dental error:", e.message);
+      // Don't silently fall back — log what we got
+    }
 
     return {
       statusCode: 200,
@@ -255,11 +296,13 @@ Return JSON:
     // CHANGED: Increased max_tokens to 1600 to accommodate the new fields.
     const nutritionPrompt =
 `DOG: ${dogName}, ${breed}, ${age}yrs, ${sex}${weight ? ", " + weight + "lbs" : ""}${flags.length > 0 ? " | " + flags.join("; ") : ""}
-DENTAL: risk=${dentalResults.overall_risk}, tartar=${dentalResults.tartar?.composite}/3, gums=${dentalResults.gingival?.composite}/3, structure=${dentalResults.structural?.score}/3
+DENTAL: risk=${dentalResults.overall_risk}, stage=${dentalResults.periodontal_stage || "unknown"}, tartar=${dentalResults.tartar?.composite}/3, gums=${dentalResults.gingival?.composite}/3, structure=${dentalResults.structural?.score}/3
 DIET: ${dietType} | protein=${proteinSource || "unknown"} | schedule=${feedingSchedule || "unknown"}
 TREATS: ${treats || "none"} | frequency=${treatFrequency || "unknown"}
 HOME CARE: ${homeCare || "none"} | last cleaning=${lastCleaning || "unknown"} | body condition=${bodyCondition || "unknown"}
 SYMPTOMS: ${symptoms?.length > 0 ? symptoms.join(", ") : "none"}
+
+Calibrate all recommendations to the periodontal stage. recheck_days: PD0=90, PD1=60, PD2=45, PD3/PD4=30.
 
 Return JSON:
 {"diet_assessment":"","diet_mechanism":"","format_callout":"","format_risk_flags":"","treat_analysis":"","oral_ph_impact":"","primary_recommendation":"","food_recommendations":[{"category":"","recommendation":"","priority":"medium","vohc_approved":false,"mechanism":""}],"home_care_tips":[""],"action_plan_intro":"","action_plan":{"day_30":"","day_60":"","day_90":""},"recheck_days":60,"positive_note":""}
